@@ -32,9 +32,16 @@ function showSidebar() {
 /**
  * Set OpenAI API key (run once by developer)
  * This should be run manually in the Apps Script editor
+ * Replace 'your-api-key-here' with your actual OpenAI API key
  */
 function setApiKey() {
-  const apiKey = 'sk-your-openai-api-key-here';
+  // TODO: Replace with your actual OpenAI API key
+  const apiKey = 'your-api-key-here';
+
+  if (apiKey === 'your-api-key-here') {
+    throw new Error('Please replace with your actual OpenAI API key');
+  }
+
   PropertiesService.getScriptProperties().setProperty('OPENAI_API_KEY', apiKey);
   console.log('API key has been stored securely');
 }
