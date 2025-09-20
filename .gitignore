@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Logs
+*.log
+
+# API Keys and secrets
+.env
+config.json
+
+# Temporary files
+*.tmp
+*.temp

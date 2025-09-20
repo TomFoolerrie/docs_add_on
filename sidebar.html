@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    h3 {
+      margin-top: 0;
+      color: #1a73e8;
+      border-bottom: 2px solid #e8f0fe;
+      padding-bottom: 10px;
+    }
+
+    #chat {
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      height: 300px;
+      padding: 15px;
+      margin-bottom: 15px;
+      overflow-y: auto;
+      background-color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      max-width: 85%;
+    }
+
+    .user-message {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .ai-message {
+      background-color: #f5f5f5;
+      color: #333;
+      border-left: 3px solid #1a73e8;
+    }
+
+    #input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #dadce0;
+      border-radius: 24px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+
+    #input:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s;
+    }
+
+    .primary-button {
+      background-color: #1a73e8;
+      color: white;
+    }
+
+    .primary-button:hover {
+      background-color: #1557b0;
+    }
+
+    .secondary-button {
+      background-color: #f8f9fa;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+
+    .secondary-button:hover {
+      background-color: #e8f0fe;
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #5f6368;
+      font-style: italic;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h3>Simple Chatbot</h3>
+
+  <div id="chat">
+    <div class="empty-state">
+      Start a conversation by typing a message below...
+    </div>
+  </div>
+
+  <input
+    type="text"
+    id="input"
+    placeholder="Type your message..."
+    onkeypress="if(event.key==='Enter') sendMessage()"
+    autocomplete="off"
+  >
+
+  <div class="button-container">
+    <button class="primary-button" onclick="sendMessage()" id="send-btn">Send</button>
+    <button class="secondary-button" onclick="insertLastResponse()" id="insert-btn">Insert Response</button>
+  </div>
+
+  <script>
+    let lastResponse = '';
+    let messageCount = 0;
+
+    function sendMessage() {
+      const input = document.getElementById('input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Clear empty state
+      if (messageCount === 0) {
+        document.getElementById('chat').innerHTML = '';
+      }
+
+      // Add user message to chat
+      addToChat(message, 'user');
+      input.value = '';
+      messageCount++;
+
+      // Show loading state
+      setLoadingState(true);
+
+      // Call server function
+      google.script.run
+        .withSuccessHandler(function(response) {
+          lastResponse = response;
+          addToChat(response, 'ai');
+          setLoadingState(false);
+        })
+        .withFailureHandler(function(error) {
+          addToChat('Error: ' + error.message, 'error');
+          setLoadingState(false);
+        })
+        .sendToAI(message);
+    }
+
+    function addToChat(text, type) {
+      const chat = document.getElementById('chat');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+
+      if (type === 'user') {
+        messageDiv.classList.add('user-message');
+        messageDiv.textContent = text;
+      } else if (type === 'ai') {
+        messageDiv.classList.add('ai-message');
+        messageDiv.textContent = text;
+      } else if (type === 'error') {
+        messageDiv.style.color = '#d32f2f';
+        messageDiv.textContent = text;
+      }
+
+      chat.appendChild(messageDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function insertLastResponse() {
+      if (lastResponse) {
+        google.script.run
+          .withSuccessHandler(function() {
+            // Could show success feedback here
+          })
+          .withFailureHandler(function(error) {
+            alert('Error inserting text: ' + error.message);
+          })
+          .insertText(lastResponse);
+      } else {
+        alert('No response to insert. Send a message first!');
+      }
+    }
+
+    function setLoadingState(loading) {
+      const sendBtn = document.getElementById('send-btn');
+      const input = document.getElementById('input');
+
+      if (loading) {
+        sendBtn.textContent = 'Sending...';
+        sendBtn.disabled = true;
+        input.disabled = true;
+        document.body.classList.add('loading');
+      } else {
+        sendBtn.textContent = 'Send';
+        sendBtn.disabled = false;
+        input.disabled = false;
+        document.body.classList.remove('loading');
+        input.focus();
+      }
+    }
+
+    // Focus input on load
+    window.onload = function() {
+      document.getElementById('input').focus();
+    };
+  </script>
+</body>
+</html>
